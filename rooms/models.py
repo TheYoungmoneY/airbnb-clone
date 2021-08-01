@@ -50,7 +50,7 @@ class Photo(core_models.TimeStampedModel):
     """ Photo Model Definition """
 
     caption = models.CharField(max_length=80)
-    file = models.ImageField()
+    file = models.ImageField(upload_to="room_photos")
     room = models.ForeignKey("Room", on_delete=models.CASCADE, related_name="photos")
 
     def __str__(self):
@@ -84,5 +84,19 @@ class Room(core_models.TimeStampedModel):
     facilities = models.ManyToManyField(Facility, related_name="rooms", blank=True)
     house_rules = models.ManyToManyField(HouseRule, related_name="rooms", blank=True)
 
+    def save(self, *args, **kwargs):
+        self.city = str.capitalize(self.city)
+        super(self).save(*args, **kwargs) # Call the real save() method
+
     def __str__(self):
         return self.name
+    
+    def total_rating(self):
+        all_reviews = self.reviews.all()
+        all_ratings = 0
+        for review in all_reviews:
+            all_ratings += review.rating_average()
+        if len(all_reviews) > 0:
+            return all_ratings / len(all_reviews)
+        else:
+            return 0
