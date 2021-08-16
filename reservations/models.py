@@ -34,11 +34,13 @@ class Reservation(core_models.TimeStampedModel):
     def in_progress(self):
         now = timezone.localtime()
         now = parse_date(timezone.localtime().strftime("%Y-%m-%d"))
-        return now > self.check_in and now < self.check_out
+        return now >= self.check_in and now <= self.check_out
+
     in_progress.boolean = True
 
     def is_finished(self):
         now = timezone.localtime()
         now = parse_date(timezone.localtime().strftime("%Y-%m-%d"))
         return now > self.check_out
+
     is_finished.boolean = True

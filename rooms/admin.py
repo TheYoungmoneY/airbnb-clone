@@ -15,15 +15,17 @@ class ItemAdmin(admin.ModelAdmin):
     def used_by(self, obj):
         return obj.rooms.count()
 
+
 class PhotoInline(admin.TabularInline):
 
     model = models.Photo
+
 
 @admin.register(models.Room)
 class RoomAdmin(admin.ModelAdmin):
     """Room Admin Definition"""
 
-    inlines = (PhotoInline, )
+    inlines = (PhotoInline,)
 
     fieldsets = (
         (
@@ -90,13 +92,14 @@ class RoomAdmin(admin.ModelAdmin):
         return obj.photos.count()
 
     count_amenities.short_description = "Count of Amenities"
+    count_photos.short_description = "Photo Counts"
 
 
 @admin.register(models.Photo)
 class PhotoAdmin(admin.ModelAdmin):
     """Photo Admin Definition"""
 
-    list_display = ("__str__","get_thumbnail")
+    list_display = ("__str__", "get_thumbnail")
 
     def get_thumbnail(self, obj):
         return mark_safe(f'<img height="50px" src="{obj.file.url}"/>')
