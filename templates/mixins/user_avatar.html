@@ -1,0 +1,7 @@
+{% if user_obj.profile %}
+    <div class="h-28 w-28 rounded-full bg-cover" style="background-image: url({{user.profile.url}});">
+{% else %}
+    <div class="h-28 w-28 bg-green-600 rounded-full text-white flex justify-center items-center">
+        <span class="text-3xl">{{user.first_name|first}}</span>
+{% endif %}
+</div>

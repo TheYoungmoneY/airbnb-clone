@@ -1,29 +1,90 @@
 @tailwind base;
 @tailwind components;
 
-.search-box{
-    transition: box-shadow 0.2s linear;
+.search-box {
+	transition: box-shadow 0.2s linear;
 }
 .nav_link {
-    @apply ml-6 border-b-2 border-white h-full flex items-center;
-    transition: border-color 0.1s linear;
-    a {
-      @apply py-10 px-5;
-    }
-    &:hover {
-      @apply border-gray-600;
-    }
-  }
+	@apply ml-6 border-b-2 border-white h-full flex items-center;
+	transition: border-color 0.1s linear;
+	a {
+		@apply py-10 px-5;
+	}
+	&:hover {
+		@apply border-gray-600;
+	}
+}
 
 .btn {
-  @apply my-1 font-medium text-lg text-center rounded-md py-4 w-full;
+	@apply my-1 font-medium text-lg text-center rounded-md py-4 w-full;
 }
 
-input {
-  @apply text-lg rounded-sm py-4 w-full text-left font-thin border border-gray-300 px-6;
-  transition: border-color 0.1s linear;
-  &:focus {
-    @apply outline-none border-green-600;
-  }
+.btn-link {
+	@apply text-center py-3 rounded-lg font-light text-lg w-full text-white bg-red-500;
 }
+
+input,
+textarea,
+select {
+	@apply text-lg rounded-sm py-4 w-full text-left font-thin border border-gray-300 px-6;
+	transition: border-color 0.1s linear;
+	&:focus {
+		@apply outline-none border-green-600;
+	}
+}
+textarea {
+	resize: none;
+	height: 100px;
+}
+
+form {
+	.input {
+		@apply mb-3;
+		&.has_error {
+			input {
+				@apply border border-red-500;
+				transition: border 0.1s linear;
+				&:focus {
+					@apply border-2 border-red-500 shadow-md;
+				}
+			}
+		}
+	}
+}
+
+@keyframes messageFadeIn {
+	0% {
+		opacity: 0;
+		transform: translateY(-30px);
+	}
+	5% {
+		opacity: 1;
+		transform: translateY(30px);
+	}
+	95% {
+		opacity: 1;
+		transform: translateY(30px);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-30px);
+	}
+}
+
+.message {
+	animation: messageFadeIn 2s ease-in-out forwards;
+	&.error {
+		@apply bg-red-600;
+	}
+	&.info {
+		@apply bg-blue-400;
+	}
+	&.success {
+		@apply bg-green-600;
+	}
+	&.warning {
+		@apply bg-yellow-400;
+	}
+}
+
 @tailwind utilities;

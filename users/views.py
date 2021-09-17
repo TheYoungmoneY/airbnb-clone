@@ -1,10 +1,13 @@
 import os
 import requests
-from django.views.generic import FormView
+from django.views.generic import FormView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from django.shortcuts import redirect, reverse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
+from django.contrib import messages
 from . import forms, models
 
 # Create your views here.
@@ -20,10 +23,12 @@ class LoginView(FormView):
         user = authenticate(self.request, username=email, password=password)
         if user is not None:
             login(self.request, user)
+            messages.success(self.request, f"Welcome back {user.first_name}")
         return super().form_valid(form)
 
 
 def log_out(request):
+    messages.info(request, f"See you later!")
     logout(request)
     return redirect(reverse("core:home"))
 
@@ -32,11 +37,6 @@ class SignUpView(FormView):
     template_name = "users/signup.html"
     form_class = forms.SignUpForm
     success_url = reverse_lazy("core:home")
-    initial = {
-        "first_name": "youngmoney",
-        "last_name": "Ji",
-        "email": "youngmoney@github.com",
-    }
 
     def form_valid(self, form):
         form.save()
@@ -86,7 +86,7 @@ def github_callback(request):
             token_json = token.json()
             error = token_json.get("error", None)
             if error is not None:  # Access Token 못 받아왔다.
-                raise GithubException()
+                raise GithubException("Can't get access token.")
             else:  # Access Token 잘 받아왔다 .
                 access_token = token_json.get("access_token")
                 profile_request = requests.get(
@@ -111,7 +111,7 @@ def github_callback(request):
                     try:  # 우리 사이트에 이미 있는 user일 때 Login해준다. (email이나 kakao로 login한 적이 있는 경우 제외)
                         user = models.User.objects.get(email=email)
                         if user.login_method != models.User.LOGIN_GITHUB:
-                            raise GithubException()  # email이나 kakao로 login한 적이 있는 경우
+                            raise GithubException(f"Please log in with: {user.login_method}")  # email이나 kakao로 login한 적이 있는 경우
                     except models.User.DoesNotExist:
                         # 우리 사이트에 없는 user라면 가입시킨다.
                         user = models.User.objects.create(
@@ -125,12 +125,14 @@ def github_callback(request):
                         user.set_unusable_password()
                         user.save()
                     login(request, user)
+                    messages.success(request, f"Welcome back {user.first_name}")
                     return redirect(reverse("core:home"))
                 else:  # Github API에서 username 못 받아옴
-                    raise GithubException()
+                    raise GithubException("Can't get your profile.")
         else:  # callback으로 Code를 못받아왔다.
-            raise GithubException()
-    except GithubException:
+            raise GithubException("Can't get code.")
+    except GithubException as e:
+        messages.error(request, e)
         return redirect(reverse("users:login"))
 
 
@@ -157,7 +159,7 @@ def kakao_callback(request):
         token_json = token_request.json()
         error = token_json.get("error", None)
         if error is not None:  # Access Token 못 받아왔다.
-            raise GithubException()
+            raise KakaoException("Can't get authorization code.")
         else:  # Access Token 잘 받아왔다 .
             access_token = token_json.get("access_token")
             profile_request = requests.get(
@@ -170,7 +172,7 @@ def kakao_callback(request):
             properties = profile_json.get("kakao_account")
             email = properties.get("email")
             if email is None:  # Kakao API로 email 못 받아온 경우
-                raise KakaoException()
+                raise KakaoException("Please also give me your email.")
             # Kakao API로 email 잘 받아왔다
             profile = properties.get("profile")
             nickname = profile.get("nickname")
@@ -178,9 +180,9 @@ def kakao_callback(request):
             try:  # 우리 사이트에 이미 있는 user일 때 Login해준다.
                 user = models.User.objects.get(email=email)
                 if (
-                    user.login_methos != models.User.LOGIN_KAKAO
+                    user.login_method != models.User.LOGIN_KAKAO
                 ):  # email이나 github으로 login한 적이 있는 경우
-                    raise KakaoException()
+                    raise KakaoException(f"Please log in with: {user.login_method}")
             except models.User.DoesNotExist:
                 # 우리 사이트에 없는 user라면 가입시킨다.
                 user = models.User.objects.create(
@@ -198,7 +200,50 @@ def kakao_callback(request):
                         f"{nickname}-profile", ContentFile(photo_request.content)
                     )
             login(request, user)
+            messages.success(request, f"Welcome back {user.first_name}")
             return redirect(reverse("core:home"))
 
-    except KakaoException:
+    except KakaoException as e:
+        messages.error(request, e)
         return redirect(reverse("users:login"))
+
+class UserProfileView(DetailView):
+
+    model = models.User
+    context_object_name = "user_obj"
+
+class UpdateProfileView(UpdateView):
+    
+    model = models.User
+    template_name = "users/update-profile.html"
+    fields = (
+        "email",
+        "first_name", 
+        "last_name", 
+        "profile", 
+        "gender", 
+        "bio", 
+        "birthdate", 
+        "language", 
+        "currency", 
+    )
+
+    def get_object(self, queryset=None):
+        return self.request.user
+    
+    def form_valid(self, form):
+        email = form.cleaned_data.get("email")
+        self.object.username = email
+        self.object.save()
+        return super().form_valid(form)
+
+class UpdatePasswordView(PasswordChangeView):
+    template_name = "users/update-password.html"
+
+@login_required
+def switch_hosting(request):
+    try:
+        del request.session["is_hosting"]
+    except KeyError:
+        request.session["is_hosting"] = True
+    return redirect(reverse("core:home"))

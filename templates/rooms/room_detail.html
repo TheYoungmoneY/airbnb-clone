@@ -4,14 +4,13 @@
    {{room.name}}
 {% endblock page_title %}
 
-
 {% block content %}
 <div>
    <h1>{{room.name}}</h1>
    <h4>{{room.description}}</h4>
 </div>
 <div>
-   <h2> Host: {{room.host.username}} 
+   <h2> Host: <a href="{{room.host.get_absolute_url}}">{{room.host.username}} </a>
    {% if  room.host.superhost %}
       (superhost)
    {% endif %}
@@ -36,6 +35,13 @@
       <li>{{a}}</li>
    {% endfor %}
    </ul>
+</div>
+<div class="w-1/3">
+   
+   {% if room.host == user %}
+      <a href="{% url "rooms:edit" room.pk %}" class="btn-link block">Edit Room</a>   
+   {% endif %}
+      
 </div>
 {% endblock content %}
 

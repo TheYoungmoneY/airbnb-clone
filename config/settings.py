@@ -143,3 +143,6 @@ EMAIL_HOST_USER = os.environ.get("MAILGUN_USERNAME")
 EMAIL_HOST_PASSWORD = os.environ.get("MAILGUN_PASSWORD")
 # EMAIL_FROM = "greenflex@sandbox17cda80965c1458abd87e230f46aa916.mailgun.org"
 EMAIL_FROM = "postmaster@sandbox17cda80965c1458abd87e230f46aa916.mailgun.org"
+
+# Auth
+LOGIN_URL = "users/login/"
