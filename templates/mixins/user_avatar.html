@@ -1,7 +1,7 @@
-{% if user_obj.profile %}
-    <div class="h-28 w-28 rounded-full bg-cover" style="background-image: url({{user.profile.url}});">
+{% if user.profile %}
+    <div class="{{h_and_w|default:'h-24 w-24'}} rounded-full bg-cover" style="background-image: url({{user.profile.url}});">
 {% else %}
-    <div class="h-28 w-28 bg-green-600 rounded-full text-white flex justify-center items-center">
-        <span class="text-3xl">{{user.first_name|first}}</span>
+    <div class="{{h_and_w|default:'h-24 w-24'}} bg-green-600 rounded-full text-white flex justify-center items-center">
+        <span class="{{text|default:'text-3xl'}}">{{user.first_name|first}}</span>
 {% endif %}
 </div>

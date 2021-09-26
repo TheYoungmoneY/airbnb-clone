@@ -47,7 +47,7 @@ PROJECT_APPS = [
     "lists.apps.ListsConfig",
     "conversations.apps.ConversationsConfig",
 ]
-INSTALLED_APPS = DJANGO_PPS + PROJECT_APPS
+INSTALLED_APPS = DJANGO_PPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -57,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -113,7 +114,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
+
 LANGUAGE_CODE = "en-us"
+
+# Language
+LANGUAGE_COOKIE_NAME = "django_language"
+
 
 TIME_ZONE = "Asia/Seoul"
 
@@ -146,3 +152,7 @@ EMAIL_FROM = "postmaster@sandbox17cda80965c1458abd87e230f46aa916.mailgun.org"
 
 # Auth
 LOGIN_URL = "users/login/"
+
+#Locale
+
+LOCALE_PATH = (os.path.join(BASE_DIR,"locale"),)

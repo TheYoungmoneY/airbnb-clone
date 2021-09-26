@@ -1,5 +1,8 @@
 import os
+from django.http.response import HttpResponse
 import requests
+from django.utils import translation
+from django.http import HttpResponse
 from django.views.generic import FormView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from django.shortcuts import redirect, reverse
@@ -8,14 +11,15 @@ from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
 from django.contrib import messages
-from . import forms, models
+from django.contrib.messages.views import SuccessMessageMixin
+from . import forms, models, mixins
+from config import settings
 
 # Create your views here.
-class LoginView(FormView):
+class LoginView(mixins.LoggedOutOnlyView, FormView):
 
     template_name = "users/login.html"
     form_class = forms.LoginForm
-    success_url = reverse_lazy("core:home")
 
     def form_valid(self, form):
         email = form.cleaned_data.get("email")
@@ -26,6 +30,13 @@ class LoginView(FormView):
             messages.success(self.request, f"Welcome back {user.first_name}")
         return super().form_valid(form)
 
+    def get_success_url(self):
+        next_arg = self.request.GET.get("next")
+        if next_arg is not None:
+            return next_arg
+        else:
+            return reverse("core:home")
+        
 
 def log_out(request):
     messages.info(request, f"See you later!")
@@ -212,7 +223,7 @@ class UserProfileView(DetailView):
     model = models.User
     context_object_name = "user_obj"
 
-class UpdateProfileView(UpdateView):
+class UpdateProfileView(mixins.LoggedInOnlyView, SuccessMessageMixin, UpdateView):
     
     model = models.User
     template_name = "users/update-profile.html"
@@ -227,18 +238,47 @@ class UpdateProfileView(UpdateView):
         "language", 
         "currency", 
     )
-
+    success_message = "Profile Updated"
+    
     def get_object(self, queryset=None):
         return self.request.user
-    
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
+        form.fields['email'].widget.attrs = {'placeholder':"Email"}
+        form.fields['first_name'].widget.attrs = {'placeholder':"First Name"}
+        form.fields['last_name'].widget.attrs = {'placeholder':"Last Name"}
+        form.fields['profile'].widget.attrs = {'placeholder':"Profile"}
+        form.fields['gender'].widget.attrs = {'placeholder':"Gender"}
+        form.fields['bio'].widget.attrs = {'placeholder':"Bio"}
+        form.fields['birthdate'].widget.attrs = {'placeholder':"Birthdate"}
+        form.fields['language'].widget.attrs = {'placeholder':"Language"}
+        form.fields['currency'].widget.attrs = {'placeholder':"Currency"}
+        return form
+
     def form_valid(self, form):
         email = form.cleaned_data.get("email")
         self.object.username = email
         self.object.save()
         return super().form_valid(form)
 
-class UpdatePasswordView(PasswordChangeView):
+class UpdatePasswordView(
+    mixins.EmailLoginOnlyView,
+    mixins.LoggedInOnlyView, 
+    SuccessMessageMixin, 
+    PasswordChangeView
+    ):
     template_name = "users/update-password.html"
+    success_message = "Password Changed"
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
+        form.fields['old_password'].widget.attrs = {'placeholder':"Current password"}
+        form.fields['new_password1'].widget.attrs = {'placeholder':"New password"}
+        form.fields['new_password2'].widget.attrs = {'placeholder':"Confirm new password"}
+        return form
+    def get_success_url(self):
+        return self.request.user.get_absolute_url()
+        
 
 @login_required
 def switch_hosting(request):
@@ -247,3 +287,10 @@ def switch_hosting(request):
     except KeyError:
         request.session["is_hosting"] = True
     return redirect(reverse("core:home"))
+
+def switch_language(request):
+    lang = request.GET.get("lang", None)
+    if lang is not None:
+        response = HttpResponse(200)
+        response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang)
+    return response

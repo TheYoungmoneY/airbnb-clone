@@ -87,4 +87,18 @@ form {
 	}
 }
 
+.border-section {
+	@apply border-b border-gray-200 pb-6 mt-6;
+}
+
+.cal-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	grid-gap: 10px;
+	justify-items: center;
+}
+.cal-number {
+	@apply text-sm font-light w-full bg-gray-100 text-center rounded p-1;
+}
+
 @tailwind utilities;
